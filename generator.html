@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIL Roster QR Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            background: #f4f4f9; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            color: #333;
+        }
+        .panel { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+        .setup-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+        .setup-row div { flex: 1; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
+        input { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+        }
+        button { 
+            background: #006699; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        button:hover { background: #005580; }
+        
+        /* The Visual Grid Styling */
+        #visual-grid {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .seat-input-card {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .seat-header {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .seat-inputs {
+            display: flex;
+            gap: 5px;
+        }
+        .seat-inputs input[type="text"] { flex: 2; }
+        .seat-inputs input[type="number"] { flex: 1; text-align: center; }
+
+        /* QR Output Section */
+        #qr-section { display: none; text-align: center; }
+        #qr-result { margin: 20px auto; display: flex; justify-content: center; }
+        .instructions { font-size: 0.9rem; color: #666; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h2>Step 1: Chamber Dimensions</h2>
+        <div class="setup-row">
+            <div>
+                <label>Rows</label>
+                <input type="number" id="grid-rows" value="4" min="1">
+            </div>
+            <div>
+                <label>Columns</label>
+                <input type="number" id="grid-cols" value="6" min="1">
+            </div>
+            <div>
+                <button id="create-grid-btn" style="width: 100%;">Create Visual Grid</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="entry-panel" class="panel" style="display: none;">
+        <h2>Step 2: Map the Chamber</h2>
+        <div class="instructions">Type the student's name and their Speech Precedence (Sp.Pr). Question precedence will be automatically reversed when scanned. Leave empty seats blank.</div>
+        
+        <div id="visual-grid"></div>
+
+        <button id="generate-btn" style="width: 100%; margin-top: 20px; font-size: 1.1rem;">Generate QR Code</button>
+    </div>
+
+    <div id="qr-section" class="panel">
+        <h2>Step 3: Scan with Tablet</h2>
+        <div class="instructions">Open the Tracker App on the tablet and tap "Scan Roster".</div>
+        <div id="qr-result"></div>
+        <p id="data-size-warning" style="color: #cc0000; font-weight: bold;"></p>
+    </div>
+
+    <script>
+        const qrContainer = document.getElementById('qr-result');
+        const warningText = document.getElementById('data-size-warning');
+        let currentRows = 0;
+        let currentCols = 0;
+
+        document.getElementById('create-grid-btn').addEventListener('click', () => {
+            currentRows = parseInt(document.getElementById('grid-rows').value);
+            currentCols = parseInt(document.getElementById('grid-cols').value);
+            
+            if (currentRows <= 0 || currentCols <= 0) return;
+
+            const grid = document.getElementById('visual-grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${currentCols}, 1fr)`;
+
+            const totalSeats = currentRows * currentCols;
+
+            for (let i = 1; i <= totalSeats; i++) {
+                const card = document.createElement('div');
+                card.className = 'seat-input-card';
+                card.innerHTML = `
+                    <div class="seat-header">Seat ${String(i).padStart(2, '0')}</div>
+                    <div class="seat-inputs">
+                        <input type="text" class="inp-name" data-id="${i}" placeholder="Name">
+                        <input type="number" class="inp-prec" data-id="${i}" placeholder="Sp.Pr" min="1">
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+
+            document.getElementById('entry-panel').style.display = 'block';
+            document.getElementById('qr-section').style.display = 'none';
+        });
+
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const totalSeats = currentRows * currentCols;
+            
+            // Collect all data into a highly compressed array format
+            // payload.d will look like: [ ["Addison", 1], ["Emma", 2], ["", 0], ... ]
+            const seatData = [];
+            
+            let validSpeakerCount = 0;
+
+            for (let i = 1; i <= totalSeats; i++) {
+                const nameInput = document.querySelector(`.inp-name[data-id="${i}"]`).value.trim();
+                const precInput = parseInt(document.querySelector(`.inp-prec[data-id="${i}"]`).value) || 0;
+                
+                if (nameInput) validSpeakerCount++;
+                
+                // Pack into a tiny 2-item array to save QR code bytes
+                seatData.push([nameInput, precInput]);
+            }
+
+            if (validSpeakerCount === 0) {
+                alert("Please enter at least one student name before generating.");
+                return;
+            }
+
+            const payload = {
+                r: currentRows,
+                c: currentCols,
+                s: validSpeakerCount, // Pass the total number of real speakers to the tablet for math
+                d: seatData
+            };
+
+            const payloadString = JSON.stringify(payload);
+            
+            qrContainer.innerHTML = '';
+            warningText.innerText = '';
+            document.getElementById('qr-section').style.display = 'block';
+
+            try {
+                new QRCode(qrContainer, {
+                    text: payloadString,
+                    width: 350,
+                    height: 350,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.L
+                });
+                // Auto-scroll down to the QR code
+                document.getElementById('qr-section').scrollIntoView({ behavior: 'smooth' });
+            } catch (e) {
+                warningText.innerText = "Error: Too much text for one QR code. Please abbreviate names.";
+            }
+        });
+    </script>
+</body>
+</html>

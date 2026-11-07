@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Debate PO Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+	<script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <header id="control-bar">
+        <div class="docket-info">
+            <span id="docket-display">Docket: 1.1</span>
+            <button id="bill-plus-btn" class="action-btn">Bill++</button>
+            <button id="speech-list-btn" class="list-btn">SpeechList</button>
+            <button id="question-list-btn" class="list-btn">QuestionList</button>
+            
+            <span class="divider">|</span>
+            
+            <button id="universal-edit-btn" class="action-btn">Edit All</button>
+            <button id="new-grid-btn" class="action-btn">New Seating Grid</button>
+            <button id="reset-btn" class="danger-btn">Start Over</button>
+        </div>
+        
+        <div class="mode-toggle">
+            <input type="radio" id="mode-speech" name="view-mode" value="speech" checked>
+            <label for="mode-speech">Speech Mode</label>
+            
+            <input type="radio" id="mode-question" name="view-mode" value="question">
+            <label for="mode-question">Question Mode</label>
+        </div>
+
+        <button id="import-btn">Scan Roster</button>
+    </header>
+
+    <main id="seating-grid" class="grid-container"></main>
+
+    <!-- Modal 1: Record Speech/Question -->
+    <div id="record-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="record-student-name">Student Name</h2>
+            <h3 id="record-action-title">Log Activity</h3>
+            
+            <input type="text" id="record-time-input" placeholder="Duration (e.g. 2:45)">
+            
+            <div class="modal-actions-row">
+                <button id="submit-record-btn" class="action-btn">Save</button>
+                <button class="close-modal-btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: View History -->
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="history-student-name">Student Name</h2>
+            <h3>Speech History</h3>
+            <ul id="history-list"></ul>
+            <div class="modal-actions-row">
+                <button class="close-modal-btn cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Universal Edit -->
+    <div id="universal-edit-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
+            <h2>Edit Chamber State</h2>
+            
+            <!-- NEW: Edit Docket and Speech Number -->
+            <div class="docket-edit-section">
+                <label>Current Bill/Docket #: <input type="number" id="edit-docket-num" min="1"></label>
+                <label>Next Speech #: <input type="number" id="edit-speech-num" min="1"></label>
+            </div>
+
+            <h3 style="margin-top: 0;">Edit Speakers</h3>
+            <div id="universal-edit-container" style="overflow-y: auto; flex-grow: 1; padding-right: 10px;">
+                <!-- JS injects the list of text boxes here -->
+            </div>
+
+            <div class="modal-actions-row" style="padding-top: 15px; border-top: 1px solid #eee;">
+                <button id="submit-universal-edit-btn" class="action-btn">Save Changes</button>
+                <button class="close-modal-btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Precedence Lists (For SpeechList / QuestionList) -->
+    <div id="precedence-list-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <h2 id="precedence-list-title">Precedence Order</h2>
+            <ol id="precedence-list-content" style="text-align: left; padding-left: 30px; line-height: 1.6; overflow-y: auto; flex-grow: 1; font-size: 1.1rem;">
+                <!-- JS injects ordered list items here -->
+            </ol>
+            <div class="modal-actions-row" style="padding-top: 15px; border-top: 1px solid #eee;">
+                <button class="close-modal-btn cancel-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+	<!-- Modal 5: Camera Scanner -->
+    <div id="scanner-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <h2>Scan Chamber Roster</h2>
+            <div id="reader" style="width: 100%; margin-top: 15px;"></div>
+            <div class="modal-actions-row" style="margin-top: 20px;">
+                <button id="close-scanner-btn" class="danger-btn" style="width: 100%; margin-left: 0;">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
