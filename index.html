@@ -30,8 +30,25 @@
             <input type="radio" id="mode-question" name="view-mode" value="question">
             <label for="mode-question">Question Mode</label>
         </div>
+		
+		<!-- NEW: PO Perspective Toggle -->
+        <div class="mode-toggle" style="background: #e3f2fd; padding: 5px; border-radius: 5px;">
+            <input type="radio" id="view-seated" name="perspective-mode" value="seated" checked>
+            <label for="view-seated">Seated View</label>
+            
+            <input type="radio" id="view-po" name="perspective-mode" value="po">
+            <label for="view-po">PO View</label>
+        </div>
 
         <button id="import-btn">Scan Roster</button>
+    </header>
+
+    <main id="seating-grid" class="grid-container"></main>
+    
+    <!-- NEW: Visual Anchor for PO -->
+    <div id="po-desk-indicator" class="po-desk-indicator">
+        ▼ FRONT OF ROOM (PO DESK) ▼
+    </div>
     </header>
 
     <main id="seating-grid" class="grid-container"></main>

@@ -257,3 +257,35 @@ body {
     width: 60px;
     text-align: center;
 }
+
+/* --- PO VIEW MODE (180 DEGREE FLIP) --- */
+
+/* Flip the entire chamber grid upside down */
+.grid-container.po-view-active {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* Flip the individual student cards back so the text is readable */
+.grid-container.po-view-active .seat-card {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* Visual Anchor Styling */
+.po-desk-indicator {
+    display: none; /* Hidden by default in Seated View */
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    background: #006600; /* Wall HS Green */
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Show the desk indicator only when PO view is active */
+.grid-container.po-view-active + .po-desk-indicator {
+    display: block; 
+}

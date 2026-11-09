@@ -324,6 +324,18 @@ document.querySelectorAll('input[name="view-mode"]').forEach(radio => {
     });
 });
 
+// --- NEW: PO Perspective Toggle Listener ---
+document.querySelectorAll('input[name="perspective-mode"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const grid = document.getElementById('seating-grid');
+        if (e.target.value === 'po') {
+            grid.classList.add('po-view-active');
+        } else {
+            grid.classList.remove('po-view-active');
+        }
+    });
+});
+
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
     btn.addEventListener('click', closeAllModals);
 });
