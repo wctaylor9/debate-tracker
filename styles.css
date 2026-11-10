@@ -354,22 +354,26 @@ body {
         gap: 2px;
     }
 
-   .seat-actions {
-        flex-direction: row; /* Puts them side-by-side horizontally */
-        flex: 0 0 auto; /* Prevents the container from stretching wider than needed */
-        gap: 5px;
-        align-items: center; /* Centers them vertically next to the stats */
+	.seat-actions {
+        display: flex !important;
+        flex-direction: row !important; /* Force side-by-side */
+        flex-wrap: nowrap !important; /* Absolutely forbid stacking/wrapping */
+        flex: 0 0 auto !important; /* Do not stretch the container */
+        gap: 8px !important;
+        align-items: center !important; 
     }
 
     /* Icon Buttons (Perfect Squares for Side-by-Side) */
     .seat-actions button {
-        width: 40px;
-        height: 40px;
-        padding: 0; 
-        font-size: 1.4rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        width: 45px !important; /* Locked width */
+        height: 45px !important; /* Locked height */
+        flex: none !important; /* Kills the 'flex: 1' from the base CSS */
+        padding: 0 !important; 
+        margin: 0 !important;
+        font-size: 1.6rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
     .long-text { display: none; }
