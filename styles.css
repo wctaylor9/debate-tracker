@@ -354,16 +354,22 @@ body {
         gap: 2px;
     }
 
-    .seat-actions {
-        flex-direction: column; /* Stack buttons on the right side */
-        flex: 1;
-        gap: 8px;
+   .seat-actions {
+        flex-direction: row; /* Puts them side-by-side horizontally */
+        flex: 0 0 auto; /* Prevents the container from stretching wider than needed */
+        gap: 5px;
+        align-items: center; /* Centers them vertically next to the stats */
     }
 
-    /* Icon Buttons (Idea D) */
+    /* Icon Buttons (Perfect Squares for Side-by-Side) */
     .seat-actions button {
-        padding: 15px 5px; /* Taller, fat-finger-proof buttons */
-        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        padding: 0; 
+        font-size: 1.4rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .long-text { display: none; }
