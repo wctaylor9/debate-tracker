@@ -6,7 +6,7 @@ let gridRows = 0;
 let gridCols = 0;
 
 function getSpeechPriorityList() {
-    return [...speakers].sort((a, b) => {
+    return speakers.filter(s => !s.isDeleted).sort((a, b) => {
         if (a.speechCount !== b.speechCount) {
             return a.speechCount - b.speechCount;
         }
@@ -20,7 +20,7 @@ function getSpeechPriorityList() {
 }
 
 function getQuestionPriorityList() {
-    return [...speakers].sort((a, b) => {
+    return speakers.filter(s => !s.isDeleted).sort((a, b) => {
         const aNotAsked = a.lastQuestionTime === "N/A";
         const bNotAsked = b.lastQuestionTime === "N/A";
 
@@ -59,6 +59,20 @@ function recordQuestion(seatId) {
     renderGrid();
 }
 
+function deleteSpeaker(seatId) {
+    const pwd = prompt("Enter password (1234) to delete this seat:");
+    if (pwd === "1234") {
+        const speaker = speakers.find(s => s.seatId === seatId);
+        if (speaker) {
+            speaker.isDeleted = true;
+            saveState();
+            renderGrid();
+        }
+    } else if (pwd !== null) {
+        alert("Incorrect password.");
+    }
+}
+
 function saveState() {
     const state = { speakers, currentDocket, currentSpeech, gridRows, gridCols };
     localStorage.setItem('uil_debate_state', JSON.stringify(state));
@@ -95,7 +109,15 @@ function renderGrid() {
     const speechRankings = getSpeechPriorityList();
     const questionRankings = getQuestionPriorityList();
 
-    speakers.forEach(speaker => {
+	speakers.forEach(speaker => {
+        // If deleted, just render an invisible placeholder to keep the grid perfectly shaped
+        if (speaker.isDeleted) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-seat-placeholder';
+            grid.appendChild(empty);
+            return; 
+        }
+
         const sRank = speechRankings.findIndex(s => s.seatId === speaker.seatId) + 1;
         const qRank = questionRankings.findIndex(s => s.seatId === speaker.seatId) + 1;
         const displayRank = currentMode === 'speech' ? sRank : qRank;
@@ -105,20 +127,29 @@ function renderGrid() {
         card.className = 'seat-card';
         
         card.innerHTML = `
+            <button class="delete-btn" onclick="deleteSpeaker('${speaker.seatId}')">×</button>
             <div class="seat-id">${speaker.seatId}</div>
-            <div class="student-name">${speaker.studentName}</div>
-            <div class="priority-badge ${badgeClass}">${displayRank}</div>
             
-            <div class="seat-stats">
-                <span>#S: ${speaker.speechCount}</span>
-                <span>LQT: ${speaker.lastQuestionTime === "N/A" ? "--:--" : speaker.lastQuestionTime}</span>
-            </div>
-            
-            <div class="seat-actions">
-                <button class="action-btn" onclick="openRecordModal('${speaker.seatId}')">
-                    ${currentMode === 'speech' ? 'Log Speech' : 'Log Q.'}
-                </button>
-                <button class="history-btn" onclick="openHistoryModal('${speaker.seatId}')">History</button>
+            <div class="card-main-content">
+                <div class="card-left">
+                    <div class="student-name">${speaker.studentName}</div>
+                    <div class="priority-badge ${badgeClass}">${displayRank}</div>
+                    <div class="seat-stats">
+                        <span>#S: ${speaker.speechCount}</span>
+                        <span>LQT: ${speaker.lastQuestionTime === "N/A" ? "--:--" : speaker.lastQuestionTime}</span>
+                    </div>
+                </div>
+                
+                <div class="card-right seat-actions">
+                    <button class="action-btn" onclick="openRecordModal('${speaker.seatId}')">
+                        <span class="long-text">${currentMode === 'speech' ? 'Log Speech' : 'Log Q.'}</span>
+                        <span class="short-text">+</span>
+                    </button>
+                    <button class="history-btn" onclick="openHistoryModal('${speaker.seatId}')">
+                        <span class="long-text">History</span>
+                        <span class="short-text">H</span>
+                    </button>
+                </div>
             </div>
         `;
         grid.appendChild(card);
@@ -290,6 +321,7 @@ document.getElementById('new-grid-btn').addEventListener('click', () => {
                     speechCount: 0,
                     lastSpeechTime: "N/A",
                     speechHistory: [],
+					isDeleted: false,
                     lastQuestionTime: "N/A"
                 });
             }
@@ -355,9 +387,9 @@ document.getElementById('submit-record-btn').addEventListener('click', () => {
 // --- INITIALIZATION ---
 if (!localStorage.getItem('uil_debate_state')) {
     speakers = [
-        { seatId: "Seat 01", studentName: "Addison", initialSpeechPrecedence: 1, initialQuestionPrecedence: 3, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], lastQuestionTime: "N/A" },
-        { seatId: "Seat 02", studentName: "Emma", initialSpeechPrecedence: 2, initialQuestionPrecedence: 2, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], lastQuestionTime: "N/A" },
-        { seatId: "Seat 03", studentName: "Lore", initialSpeechPrecedence: 3, initialQuestionPrecedence: 1, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], lastQuestionTime: "N/A" }
+        { seatId: "Seat 01", studentName: "H. Potter", initialSpeechPrecedence: 1, initialQuestionPrecedence: 3, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], isDeleted: false, lastQuestionTime: "N/A" },
+        { seatId: "Seat 02", studentName: "S. Gomez", initialSpeechPrecedence: 2, initialQuestionPrecedence: 2, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], isDeleted: false, lastQuestionTime: "N/A" },
+        { seatId: "Seat 03", studentName: "M. Carrasco", initialSpeechPrecedence: 3, initialQuestionPrecedence: 1, speechCount: 0, lastSpeechTime: "N/A", speechHistory: [], isDeleted: false, lastQuestionTime: "N/A" }
     ];
     saveState();
 }
@@ -410,6 +442,7 @@ function onScanSuccess(decodedText, decodedResult) {
                     speechCount: 0,
                     lastSpeechTime: "N/A",
                     speechHistory: [],
+					isDeleted: false,
                     lastQuestionTime: "N/A"
                 });
             } else {
@@ -422,6 +455,7 @@ function onScanSuccess(decodedText, decodedResult) {
                     speechCount: 0,
                     lastSpeechTime: "N/A",
                     speechHistory: [],
+					isDeleted: false,
                     lastQuestionTime: "N/A"
                 });
             }

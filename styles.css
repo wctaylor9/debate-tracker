@@ -289,3 +289,83 @@ body {
 .grid-container.po-view-active + .po-desk-indicator {
     display: block; 
 }
+
+/* --- DELETE BUTTON & PLACEHOLDER (JAGGED GRID) --- */
+.delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #cc0000;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.seat-card {
+    position: relative; /* Allows absolute positioning of the delete button */
+}
+
+.empty-seat-placeholder {
+    visibility: hidden; /* Takes up grid space but is completely invisible */
+}
+
+/* --- LANDSCAPE MODE OPTIMIZATIONS --- */
+.short-text { display: none; } /* Hidden by default */
+
+@media (orientation: landscape) {
+    /* Side-by-Side Layout (Idea B) */
+    .card-main-content {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        height: 100%;
+    }
+
+    .card-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex: 2;
+        text-align: left;
+    }
+
+    /* Hide Seat Number (Idea C) */
+    .seat-id { display: none; }
+
+    /* Stack Stats differently for horizontal space */
+    .seat-stats {
+        display: flex;
+        flex-direction: column;
+        border-top: none;
+        margin: 5px 0 0 0;
+        padding-top: 0;
+        gap: 2px;
+    }
+
+    .seat-actions {
+        flex-direction: column; /* Stack buttons on the right side */
+        flex: 1;
+        gap: 8px;
+    }
+
+    /* Icon Buttons (Idea D) */
+    .seat-actions button {
+        padding: 15px 5px; /* Taller, fat-finger-proof buttons */
+        font-size: 1.5rem;
+    }
+
+    .long-text { display: none; }
+    .short-text { display: inline; }
+}
