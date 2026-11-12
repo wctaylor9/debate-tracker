@@ -4,6 +4,10 @@ let currentSpeech = 1;
 let currentMode = 'speech';
 let gridRows = 0;
 let gridCols = 0;
+// NEW VARIABLES
+let totalSpeechesCount = 0;
+let totalQuestionsCount = 0;
+let undoStack = [];
 
 function getSpeechPriorityList() {
     return speakers.filter(s => !s.isDeleted).sort((a, b) => {
@@ -35,10 +39,12 @@ function getQuestionPriorityList() {
 }
 
 function recordSpeech(seatId, durationStr) {
+	saveUndoSnapshot(); // ADD THIS
     const speaker = speakers.find(s => s.seatId === seatId);
     if (!speaker) return;
 
     speaker.speechCount++;
+	totalSpeechesCount++;
     speaker.lastSpeechTime = new Date().toTimeString().split(' ')[0]; 
     
     speaker.speechHistory.push({
@@ -52,9 +58,11 @@ function recordSpeech(seatId, durationStr) {
 }
 
 function recordQuestion(seatId) {
+	saveUndoSnapshot();
     const speaker = speakers.find(s => s.seatId === seatId);
     if (!speaker) return;
     speaker.lastQuestionTime = new Date().toTimeString().split(' ')[0];
+	totalQuestionsCount++
     saveState();
     renderGrid();
 }
@@ -62,6 +70,7 @@ function recordQuestion(seatId) {
 function deleteSpeaker(seatId) {
     const pwd = prompt("Enter password (1234) to delete this seat:");
     if (pwd === "1234") {
+		saveUndoSnapshot();
         const speaker = speakers.find(s => s.seatId === seatId);
         if (speaker) {
             speaker.isDeleted = true;
@@ -74,7 +83,7 @@ function deleteSpeaker(seatId) {
 }
 
 function saveState() {
-    const state = { speakers, currentDocket, currentSpeech, gridRows, gridCols };
+    const state = { speakers, currentDocket, currentSpeech, gridRows, gridCols, totalSpeechesCount, totalQuestionsCount, undoStack };
     localStorage.setItem('uil_debate_state', JSON.stringify(state));
 }
 
@@ -87,8 +96,56 @@ function loadState() {
         currentSpeech = state.currentSpeech || 1;
         gridRows = state.gridRows || 0;
         gridCols = state.gridCols || 0;
+        totalSpeechesCount = state.totalSpeechesCount || 0;
+        totalQuestionsCount = state.totalQuestionsCount || 0;
+        undoStack = state.undoStack || [];
     }
 }
+
+// --- THE UNDO ENGINE ---
+function saveUndoSnapshot() {
+    const snapshot = {
+        // Deep copy the speakers array so modifications don't alter the history
+        speakers: JSON.parse(JSON.stringify(speakers)), 
+        currentDocket,
+        currentSpeech,
+        gridRows,
+        gridCols,
+        totalSpeechesCount,
+        totalQuestionsCount
+    };
+    undoStack.push(snapshot);
+    // Keep memory clean by only remembering the last 20 actions
+    if (undoStack.length > 20) undoStack.shift(); 
+}
+
+document.getElementById('undo-btn').addEventListener('click', () => {
+    if (undoStack.length === 0) {
+        alert("Nothing to undo!");
+        return;
+    }
+    
+    // NEW: Password gate
+    const pwd = prompt("Enter password (1234) to confirm undo:");
+    if (pwd === "1234") {
+        // Pop the last state off the stack and restore all variables
+        const prevState = undoStack.pop();
+        speakers = prevState.speakers;
+        currentDocket = prevState.currentDocket;
+        currentSpeech = prevState.currentSpeech;
+        gridRows = prevState.gridRows;
+        gridCols = prevState.gridCols;
+        totalSpeechesCount = prevState.totalSpeechesCount;
+        totalQuestionsCount = prevState.totalQuestionsCount;
+        
+        saveState();
+        renderGrid();
+    } else if (pwd !== null) {
+        // Triggers if they typed the wrong password (but ignores if they hit 'Cancel')
+        alert("Incorrect password.");
+    }
+});
+
 
 // --- DOM RENDERING ---
 function renderGrid() {
@@ -231,6 +288,7 @@ document.getElementById('question-list-btn').addEventListener('click', () => {
 
 // --- EDIT DOCKET & SPEAKERS ---
 document.getElementById('bill-plus-btn').addEventListener('click', () => {
+	saveUndoSnapshot();
     currentDocket++;
     currentSpeech = 1;
     saveState();
@@ -241,6 +299,9 @@ document.getElementById('universal-edit-btn').addEventListener('click', () => {
     // Populate current docket/speech fields
     document.getElementById('edit-docket-num').value = currentDocket;
     document.getElementById('edit-speech-num').value = currentSpeech;
+	
+	document.getElementById('edit-tot-speeches').value = totalSpeechesCount;
+    document.getElementById('edit-tot-questions').value = totalQuestionsCount;
 
     const container = document.getElementById('universal-edit-container');
     container.innerHTML = '';
@@ -268,11 +329,17 @@ document.getElementById('universal-edit-btn').addEventListener('click', () => {
 });
 
 document.getElementById('submit-universal-edit-btn').addEventListener('click', () => {
+	saveUndoSnapshot();
     // Save updated docket and speech numbers
     const updatedDocket = parseInt(document.getElementById('edit-docket-num').value);
     const updatedSpeech = parseInt(document.getElementById('edit-speech-num').value);
     if (updatedDocket >= 1) currentDocket = updatedDocket;
     if (updatedSpeech >= 1) currentSpeech = updatedSpeech;
+	
+	// NEW: Save updated totals
+    totalSpeechesCount = parseInt(document.getElementById('edit-tot-speeches').value) || 0;
+    totalQuestionsCount = parseInt(document.getElementById('edit-tot-questions').value) || 0;
+    
 
     // Save updated speaker data
     const rows = document.querySelectorAll('.edit-row');
@@ -328,6 +395,12 @@ document.getElementById('new-grid-btn').addEventListener('click', () => {
             
             currentDocket = 1;
             currentSpeech = 1;
+			
+			// NEW: Wipe the totals and history for the blank grid
+            totalSpeechesCount = 0;
+            totalQuestionsCount = 0;
+            undoStack = [];
+			
             saveState();
             renderGrid();
         } else {
@@ -463,6 +536,11 @@ function onScanSuccess(decodedText, decodedResult) {
 
         currentDocket = 1;
         currentSpeech = 1;
+		
+		totalSpeechesCount = 0;
+        totalQuestionsCount = 0;
+        undoStack = [];
+		
         saveState();
         renderGrid();
         

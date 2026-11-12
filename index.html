@@ -17,6 +17,9 @@
             <button id="question-list-btn" class="list-btn">QuestionList</button>
             
             <span class="divider">|</span>
+			
+			<!-- NEW: Undo Button -->
+			<button id="undo-btn" class="action-btn" style="background-color: #f39c12;">Undo</button>
             
             <button id="universal-edit-btn" class="action-btn">Edit All</button>
             <button id="new-grid-btn" class="action-btn">New Seating Grid</button>
@@ -86,10 +89,12 @@
             <h2>Edit Chamber State</h2>
             
             <!-- NEW: Edit Docket and Speech Number -->
-            <div class="docket-edit-section">
-                <label>Current Bill/Docket #: <input type="number" id="edit-docket-num" min="1"></label>
-                <label>Next Speech #: <input type="number" id="edit-speech-num" min="1"></label>
-            </div>
+           <div class="docket-edit-section" style="flex-wrap: wrap; gap: 10px;">
+				<label>Bill/Docket #: <input type="number" id="edit-docket-num" min="1" style="width:50px;"></label>
+				<label>Speech #: <input type="number" id="edit-speech-num" min="1" style="width:50px;"></label>
+				<label>Total Speeches: <input type="number" id="edit-tot-speeches" min="0" style="width:50px;"></label>
+				<label>Total Questions: <input type="number" id="edit-tot-questions" min="0" style="width:50px;"></label>
+			</div>
 
             <h3 style="margin-top: 0;">Edit Speakers</h3>
             <div id="universal-edit-container" style="overflow-y: auto; flex-grow: 1; padding-right: 10px;">
